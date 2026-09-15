@@ -1,29 +1,6 @@
-using Grupo06_Caso01.Models;
-using Grupo06_Caso01.Services;
-using Grupo06_Caso01.Services.Implementations;
-
-using Grupo06_Caso01.Models;
-using Grupo06_Caso01.Services;
-using Grupo06_Caso01.Services.Implementations;
-
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<ApplicationDbContext>();
-builder.Services.AddScoped<ICategoriaService, CategoriaService>();
-builder.Services.AddScoped<IProductoService, ProductoService>();
-builder.Services.AddScoped<IProveedorService, ProveedorService>();
-builder.Services.AddScoped<IPedidoService, PedidoService>();
-builder.Services.AddScoped<IMovimientoInventarioService, MovimientoInventarioService>();
-
 // Add services to the container.
-builder.Services.AddDbContext<ApplicationDbContext>();
-builder.Services.AddScoped<ICategoriaService, CategoriaService>();
-builder.Services.AddScoped<IProductoService, ProductoService>();
-builder.Services.AddScoped<IProveedorService, ProveedorService>();
-builder.Services.AddScoped<IPedidoService, PedidoService>();
-builder.Services.AddScoped<IMovimientoInventarioService, MovimientoInventarioService>();
-
-
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
