@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>Grupo06_Caso01</RootNamespace>
+        <UserSecretsId>d885b1eb-bdee-41b5-9561-3770580cd8f1</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
