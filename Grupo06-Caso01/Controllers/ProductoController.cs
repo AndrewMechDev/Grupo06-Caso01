@@ -1,3 +1,4 @@
+using Grupo06_Caso01.Dtos;
 using Grupo06_Caso01.Models;
 using Grupo06_Caso01.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -33,10 +34,19 @@ public class ProductoController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Producto>> Crear(Producto producto)
+    public async Task<ActionResult<Producto>> Crear(ProductoRequestDto request)
     {
         try
         {
+            var producto = new Producto
+            {
+                Nombre = request.Nombre,
+                Descripcion = request.Descripcion,
+                Precio = request.Precio,
+                Stockactual = request.Stockactual,
+                Stockminimo = request.Stockminimo,
+                Categoriaid = request.Categoriaid
+            };
             var creado = await _productoService.CrearAsync(producto);
             return CreatedAtAction(nameof(ObtenerPorId), new { id = creado.Productoid }, creado);
         }
@@ -47,10 +57,19 @@ public class ProductoController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Actualizar(int id, Producto producto)
+    public async Task<IActionResult> Actualizar(int id, ProductoRequestDto request)
     {
         try
         {
+            var producto = new Producto
+            {
+                Nombre = request.Nombre,
+                Descripcion = request.Descripcion,
+                Precio = request.Precio,
+                Stockactual = request.Stockactual,
+                Stockminimo = request.Stockminimo,
+                Categoriaid = request.Categoriaid
+            };
             var actualizado = await _productoService.ActualizarAsync(id, producto);
             if (!actualizado)
                 return NotFound($"No existe el producto con id {id}.");

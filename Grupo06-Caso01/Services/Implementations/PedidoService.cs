@@ -46,7 +46,7 @@ public class PedidoService : IPedidoService
         if (actual is null) return false;
         await ValidarAsync(valor);
         actual.Proveedorid = valor.Proveedorid;
-        actual.Fechapedido = valor.Fechapedido;
+        if (valor.Fechapedido != default) actual.Fechapedido = valor.Fechapedido;
         actual.Estado = valor.Estado;
         await _uow.SaveChangesAsync();
         return true;

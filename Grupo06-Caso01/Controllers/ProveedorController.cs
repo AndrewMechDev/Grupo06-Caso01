@@ -1,3 +1,4 @@
+using Grupo06_Caso01.Dtos;
 using Grupo06_Caso01.Models;
 using Grupo06_Caso01.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -33,10 +34,17 @@ public class ProveedorController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Proveedore>> Crear(Proveedore proveedor)
+    public async Task<ActionResult<Proveedore>> Crear(ProveedorRequestDto request)
     {
         try
         {
+            var proveedor = new Proveedore
+            {
+                Nombre = request.Nombre,
+                Contacto = request.Contacto,
+                Telefono = request.Telefono,
+                Email = request.Email
+            };
             var creado = await _proveedorService.CrearAsync(proveedor);
             return CreatedAtAction(nameof(ObtenerPorId), new { id = creado.Proveedorid }, creado);
         }
@@ -47,10 +55,17 @@ public class ProveedorController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Actualizar(int id, Proveedore proveedor)
+    public async Task<IActionResult> Actualizar(int id, ProveedorRequestDto request)
     {
         try
         {
+            var proveedor = new Proveedore
+            {
+                Nombre = request.Nombre,
+                Contacto = request.Contacto,
+                Telefono = request.Telefono,
+                Email = request.Email
+            };
             var actualizado = await _proveedorService.ActualizarAsync(id, proveedor);
             if (!actualizado)
                 return NotFound($"No existe el proveedor con id {id}.");

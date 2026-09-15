@@ -1,3 +1,4 @@
+using Grupo06_Caso01.Dtos;
 using Grupo06_Caso01.Models;
 using Grupo06_Caso01.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -33,10 +34,11 @@ public class CategoriaController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Categoria>> Crear(Categoria categoria)
+    public async Task<ActionResult<Categoria>> Crear(CategoriaRequestDto request)
     {
         try
         {
+            var categoria = new Categoria { Nombre = request.Nombre };
             var creada = await _categoriaService.CrearAsync(categoria);
             return CreatedAtAction(nameof(ObtenerPorId), new { id = creada.Categoriaid }, creada);
         }
@@ -47,10 +49,11 @@ public class CategoriaController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Actualizar(int id, Categoria categoria)
+    public async Task<IActionResult> Actualizar(int id, CategoriaRequestDto request)
     {
         try
         {
+            var categoria = new Categoria { Nombre = request.Nombre };
             var actualizado = await _categoriaService.ActualizarAsync(id, categoria);
             if (!actualizado)
                 return NotFound($"No existe la categoria con id {id}.");

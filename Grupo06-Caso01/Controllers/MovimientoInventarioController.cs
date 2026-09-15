@@ -1,3 +1,4 @@
+using Grupo06_Caso01.Dtos;
 using Grupo06_Caso01.Models;
 using Grupo06_Caso01.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -33,10 +34,17 @@ public class MovimientoInventarioController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Movimientosinventario>> Crear(Movimientosinventario movimiento)
+    public async Task<ActionResult<Movimientosinventario>> Crear(MovimientoInventarioRequestDto request)
     {
         try
         {
+            var movimiento = new Movimientosinventario
+            {
+                Productoid = request.Productoid,
+                Tipomovimiento = request.Tipomovimiento,
+                Cantidad = request.Cantidad,
+                Fecha = request.Fecha ?? default
+            };
             var creado = await _movimientoInventarioService.CrearAsync(movimiento);
             return CreatedAtAction(nameof(ObtenerPorId), new { id = creado.Movimientoid }, creado);
         }
@@ -52,10 +60,17 @@ public class MovimientoInventarioController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Actualizar(int id, Movimientosinventario movimiento)
+    public async Task<IActionResult> Actualizar(int id, MovimientoInventarioRequestDto request)
     {
         try
         {
+            var movimiento = new Movimientosinventario
+            {
+                Productoid = request.Productoid,
+                Tipomovimiento = request.Tipomovimiento,
+                Cantidad = request.Cantidad,
+                Fecha = request.Fecha ?? default
+            };
             var actualizado = await _movimientoInventarioService.ActualizarAsync(id, movimiento);
             if (!actualizado)
                 return NotFound($"No existe el movimiento de inventario con id {id}.");

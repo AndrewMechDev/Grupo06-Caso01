@@ -1,3 +1,4 @@
+using Grupo06_Caso01.Dtos;
 using Grupo06_Caso01.Models;
 using Grupo06_Caso01.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -33,10 +34,16 @@ public class PedidoController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Pedido>> Crear(Pedido pedido)
+    public async Task<ActionResult<Pedido>> Crear(PedidoRequestDto request)
     {
         try
         {
+            var pedido = new Pedido
+            {
+                Proveedorid = request.Proveedorid,
+                Fechapedido = request.Fechapedido ?? default,
+                Estado = request.Estado ?? string.Empty
+            };
             var creado = await _pedidoService.CrearAsync(pedido);
             return CreatedAtAction(nameof(ObtenerPorId), new { id = creado.Pedidoid }, creado);
         }
@@ -47,10 +54,16 @@ public class PedidoController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Actualizar(int id, Pedido pedido)
+    public async Task<IActionResult> Actualizar(int id, PedidoRequestDto request)
     {
         try
         {
+            var pedido = new Pedido
+            {
+                Proveedorid = request.Proveedorid,
+                Fechapedido = request.Fechapedido ?? default,
+                Estado = request.Estado ?? string.Empty
+            };
             var actualizado = await _pedidoService.ActualizarAsync(id, pedido);
             if (!actualizado)
                 return NotFound($"No existe el pedido con id {id}.");
