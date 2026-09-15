@@ -14,46 +14,54 @@ public class CategoriaService : ICategoriaService
 
     public async Task<IEnumerable<Categoria>> ListarAsync()
     {
-        return await _context.Categorias.AsNoTracking().ToListAsync();
+        return await _context.Categorias.AsNoTracking().OrderBy(x => x.Categoriaid).ToListAsync();
     }
 
     public async Task<Categoria?> ObtenerPorIdAsync(int id)
     {
-        return await _context.Categorias.AsNoTracking()
-            .FirstOrDefaultAsync(categoria => categoria.Categoriaid == id);
+        return await _context.Categorias.AsNoTracking().FirstOrDefaultAsync(x => x.Categoriaid == id);
     }
 
-    public async Task<Categoria> CrearAsync(Categoria categoria)
+    public async Task<Categoria> CrearAsync(Categoria valor)
     {
-        _context.Categorias.Add(categoria);
-        await _context.SaveChangesAsync();
-        return categoria;
-    }
-
-    public async Task<bool> ActualizarAsync(int id, Categoria categoria)
-    {
-        var existente = await _context.Categorias.FindAsync(id);
-        if (existente is null)
+        ArgumentNullException.ThrowIfNull(valor);
+        Validar(valor);
+        var nuevo = new Categoria
         {
-            return false;
-        }
+            Nombre = valor.Nombre
+        };
+        _context.Categorias.Add(nuevo);
+        await _context.SaveChangesAsync();
+        return nuevo;
+    }
 
-        existente.Nombre = categoria.Nombre;
-
+    public async Task<bool> ActualizarAsync(int id, Categoria valor)
+    {
+        ArgumentNullException.ThrowIfNull(valor);
+        var actual = await _context.Categorias.FindAsync(id);
+        if (actual is null) return false;
+        Validar(valor);
+        actual.Nombre = valor.Nombre;
         await _context.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> EliminarAsync(int id)
     {
-        var categoria = await _context.Categorias.FindAsync(id);
-        if (categoria is null)
-        {
-            return false;
-        }
-
-        _context.Categorias.Remove(categoria);
+        var actual = await _context.Categorias.FindAsync(id);
+        if (actual is null) return false;
+        if (await _context.Productos.AnyAsync(p => p.Categoriaid == id))
+            throw new InvalidOperationException("No se puede eliminar una categoría con productos asociados.");
+        _context.Categorias.Remove(actual);
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    private static void Validar(Categoria valor)
+    {
+        if (string.IsNullOrWhiteSpace(valor.Nombre))
+            throw new ArgumentException("El nombre de la categoría es obligatorio.");
+        if (valor.Nombre?.Length > 100)
+            throw new ArgumentException("Nombre admite hasta 100 caracteres.");
     }
 }
