@@ -1,25 +1,25 @@
 using Grupo06_Caso01.Models;
-using Microsoft.EntityFrameworkCore;
+using Grupo06_Caso01.Repositories;
 
 namespace Grupo06_Caso01.Services.Implementations;
 
 public class CategoriaService : ICategoriaService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IUnitOfWork _uow;
 
-    public CategoriaService(ApplicationDbContext context)
+    public CategoriaService(IUnitOfWork uow)
     {
-        _context = context;
+        _uow = uow;
     }
 
     public async Task<IEnumerable<Categoria>> ListarAsync()
     {
-        return await _context.Categorias.AsNoTracking().OrderBy(x => x.Categoriaid).ToListAsync();
+        return (await _uow.Categorias.GetAllAsync()).OrderBy(x => x.Categoriaid);
     }
 
     public async Task<Categoria?> ObtenerPorIdAsync(int id)
     {
-        return await _context.Categorias.AsNoTracking().FirstOrDefaultAsync(x => x.Categoriaid == id);
+        return await _uow.Categorias.GetByIdAsync(id);
     }
 
     public async Task<Categoria> CrearAsync(Categoria valor)
@@ -30,30 +30,30 @@ public class CategoriaService : ICategoriaService
         {
             Nombre = valor.Nombre
         };
-        _context.Categorias.Add(nuevo);
-        await _context.SaveChangesAsync();
+        await _uow.Categorias.AddAsync(nuevo);
+        await _uow.SaveChangesAsync();
         return nuevo;
     }
 
     public async Task<bool> ActualizarAsync(int id, Categoria valor)
     {
         ArgumentNullException.ThrowIfNull(valor);
-        var actual = await _context.Categorias.FindAsync(id);
+        var actual = await _uow.Categorias.GetByIdAsync(id);
         if (actual is null) return false;
         Validar(valor);
         actual.Nombre = valor.Nombre;
-        await _context.SaveChangesAsync();
+        await _uow.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> EliminarAsync(int id)
     {
-        var actual = await _context.Categorias.FindAsync(id);
+        var actual = await _uow.Categorias.GetByIdAsync(id);
         if (actual is null) return false;
-        if (await _context.Productos.AnyAsync(p => p.Categoriaid == id))
+        if (await _uow.Productos.ExisteParaCategoriaAsync(id))
             throw new InvalidOperationException("No se puede eliminar una categoría con productos asociados.");
-        _context.Categorias.Remove(actual);
-        await _context.SaveChangesAsync();
+        await _uow.Categorias.DeleteAsync(id);
+        await _uow.SaveChangesAsync();
         return true;
     }
 

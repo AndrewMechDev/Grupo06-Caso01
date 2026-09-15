@@ -1,25 +1,25 @@
 using Grupo06_Caso01.Models;
-using Microsoft.EntityFrameworkCore;
+using Grupo06_Caso01.Repositories;
 
 namespace Grupo06_Caso01.Services.Implementations;
 
 public class PedidoService : IPedidoService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IUnitOfWork _uow;
 
-    public PedidoService(ApplicationDbContext context)
+    public PedidoService(IUnitOfWork uow)
     {
-        _context = context;
+        _uow = uow;
     }
 
     public async Task<IEnumerable<Pedido>> ListarAsync()
     {
-        return await _context.Pedidos.AsNoTracking().OrderBy(x => x.Pedidoid).ToListAsync();
+        return (await _uow.Pedidos.GetAllAsync()).OrderBy(x => x.Pedidoid);
     }
 
     public async Task<Pedido?> ObtenerPorIdAsync(int id)
     {
-        return await _context.Pedidos.AsNoTracking().FirstOrDefaultAsync(x => x.Pedidoid == id);
+        return await _uow.Pedidos.GetByIdAsync(id);
     }
 
     public async Task<Pedido> CrearAsync(Pedido valor)
@@ -34,31 +34,31 @@ public class PedidoService : IPedidoService
             Fechapedido = valor.Fechapedido,
             Estado = valor.Estado
         };
-        _context.Pedidos.Add(nuevo);
-        await _context.SaveChangesAsync();
+        await _uow.Pedidos.AddAsync(nuevo);
+        await _uow.SaveChangesAsync();
         return nuevo;
     }
 
     public async Task<bool> ActualizarAsync(int id, Pedido valor)
     {
         ArgumentNullException.ThrowIfNull(valor);
-        var actual = await _context.Pedidos.FindAsync(id);
+        var actual = await _uow.Pedidos.GetByIdAsync(id);
         if (actual is null) return false;
         await ValidarAsync(valor);
         actual.Proveedorid = valor.Proveedorid;
         actual.Fechapedido = valor.Fechapedido;
         actual.Estado = valor.Estado;
-        await _context.SaveChangesAsync();
+        await _uow.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> EliminarAsync(int id)
     {
-        var actual = await _context.Pedidos.FindAsync(id);
+        var actual = await _uow.Pedidos.GetByIdAsync(id);
         if (actual is null) return false;
 
-        _context.Pedidos.Remove(actual);
-        await _context.SaveChangesAsync();
+        await _uow.Pedidos.DeleteAsync(id);
+        await _uow.SaveChangesAsync();
         return true;
     }
 
@@ -66,7 +66,7 @@ public class PedidoService : IPedidoService
     {
         if (string.IsNullOrWhiteSpace(valor.Estado) || valor.Estado.Length > 50)
             throw new ArgumentException("El estado es obligatorio y admite hasta 50 caracteres.");
-        if (!await _context.Proveedores.AnyAsync(p => p.Proveedorid == valor.Proveedorid))
+        if ((await _uow.Proveedores.GetByIdAsync(valor.Proveedorid)) is null)
             throw new ArgumentException("El proveedor indicado no existe.");
         if (valor.Fechapedido.Kind == DateTimeKind.Utc)
             throw new ArgumentException("La fecha del pedido debe ser una fecha local, sin zona horaria UTC.");

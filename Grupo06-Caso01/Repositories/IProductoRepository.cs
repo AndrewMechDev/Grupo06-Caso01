@@ -6,4 +6,5 @@ public interface IProductoRepository : IGenericRepository<Producto>
 {
     Task<IEnumerable<Producto>> GetByCategoriaAsync(int categoriaId);
     Task<IEnumerable<Producto>> GetWithLowStockAsync();
+    Task<bool> ExisteParaCategoriaAsync(int categoriaId);
 }

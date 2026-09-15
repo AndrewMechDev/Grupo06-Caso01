@@ -5,4 +5,5 @@ namespace Grupo06_Caso01.Repositories;
 public interface IPedidoRepository : IGenericRepository<Pedido>
 {
     Task<IEnumerable<Pedido>> GetByProveedorAsync(int proveedorId);
+    Task<bool> ExisteParaProveedorAsync(int proveedorId);
 }

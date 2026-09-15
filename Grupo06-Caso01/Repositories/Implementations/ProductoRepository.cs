@@ -11,4 +11,7 @@ public class ProductoRepository(ApplicationDbContext context)
 
     public async Task<IEnumerable<Producto>> GetWithLowStockAsync() =>
         await Entities.AsNoTracking().Where(p => p.Stockactual <= p.Stockminimo).ToListAsync();
+
+    public async Task<bool> ExisteParaCategoriaAsync(int categoriaId) =>
+        await Entities.AnyAsync(p => p.Categoriaid == categoriaId);
 }

@@ -1,4 +1,7 @@
+using System.Data;
 using Grupo06_Caso01.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Grupo06_Caso01.Repositories.Implementations;
 
@@ -30,4 +33,9 @@ public class UnitOfWork : IUnitOfWork
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
         _context.SaveChangesAsync(cancellationToken);
+
+    public Task<IDbContextTransaction> BeginTransactionAsync(
+        IsolationLevel isolationLevel = IsolationLevel.Serializable,
+        CancellationToken cancellationToken = default) =>
+        _context.Database.BeginTransactionAsync(isolationLevel, cancellationToken);
 }

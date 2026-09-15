@@ -1,25 +1,25 @@
 using Grupo06_Caso01.Models;
-using Microsoft.EntityFrameworkCore;
+using Grupo06_Caso01.Repositories;
 
 namespace Grupo06_Caso01.Services.Implementations;
 
 public class ProductoService : IProductoService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IUnitOfWork _uow;
 
-    public ProductoService(ApplicationDbContext context)
+    public ProductoService(IUnitOfWork uow)
     {
-        _context = context;
+        _uow = uow;
     }
 
     public async Task<IEnumerable<Producto>> ListarAsync()
     {
-        return await _context.Productos.AsNoTracking().OrderBy(x => x.Productoid).ToListAsync();
+        return (await _uow.Productos.GetAllAsync()).OrderBy(x => x.Productoid);
     }
 
     public async Task<Producto?> ObtenerPorIdAsync(int id)
     {
-        return await _context.Productos.AsNoTracking().FirstOrDefaultAsync(x => x.Productoid == id);
+        return await _uow.Productos.GetByIdAsync(id);
     }
 
     public async Task<Producto> CrearAsync(Producto valor)
@@ -35,15 +35,15 @@ public class ProductoService : IProductoService
             Stockminimo = valor.Stockminimo,
             Categoriaid = valor.Categoriaid
         };
-        _context.Productos.Add(nuevo);
-        await _context.SaveChangesAsync();
+        await _uow.Productos.AddAsync(nuevo);
+        await _uow.SaveChangesAsync();
         return nuevo;
     }
 
     public async Task<bool> ActualizarAsync(int id, Producto valor)
     {
         ArgumentNullException.ThrowIfNull(valor);
-        var actual = await _context.Productos.FindAsync(id);
+        var actual = await _uow.Productos.GetByIdAsync(id);
         if (actual is null) return false;
         await ValidarAsync(valor);
         actual.Nombre = valor.Nombre;
@@ -52,18 +52,18 @@ public class ProductoService : IProductoService
         actual.Stockactual = valor.Stockactual;
         actual.Stockminimo = valor.Stockminimo;
         actual.Categoriaid = valor.Categoriaid;
-        await _context.SaveChangesAsync();
+        await _uow.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> EliminarAsync(int id)
     {
-        var actual = await _context.Productos.FindAsync(id);
+        var actual = await _uow.Productos.GetByIdAsync(id);
         if (actual is null) return false;
-        if (await _context.Movimientosinventarios.AnyAsync(m => m.Productoid == id))
+        if (await _uow.MovimientosInventario.ExisteParaProductoAsync(id))
             throw new InvalidOperationException("No se puede eliminar un producto con movimientos asociados.");
-        _context.Productos.Remove(actual);
-        await _context.SaveChangesAsync();
+        await _uow.Productos.DeleteAsync(id);
+        await _uow.SaveChangesAsync();
         return true;
     }
 
@@ -73,7 +73,7 @@ public class ProductoService : IProductoService
             throw new ArgumentException("El nombre del producto es obligatorio.");
         if (valor.Precio < 0 || valor.Stockactual < 0 || valor.Stockminimo < 0)
             throw new ArgumentException("El precio y los valores de stock no pueden ser negativos.");
-        if (!await _context.Categorias.AnyAsync(c => c.Categoriaid == valor.Categoriaid))
+        if ((await _uow.Categorias.GetByIdAsync(valor.Categoriaid)) is null)
             throw new ArgumentException("La categoría indicada no existe.");
         if (valor.Nombre?.Length > 100)
             throw new ArgumentException("Nombre admite hasta 100 caracteres.");

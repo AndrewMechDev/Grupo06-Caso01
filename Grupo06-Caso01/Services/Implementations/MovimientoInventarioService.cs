@@ -1,35 +1,33 @@
-using System.Data;
 using Grupo06_Caso01.Models;
-using Microsoft.EntityFrameworkCore;
+using Grupo06_Caso01.Repositories;
 
 namespace Grupo06_Caso01.Services.Implementations;
 
 public class MovimientoInventarioService : IMovimientoInventarioService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IUnitOfWork _uow;
 
-    public MovimientoInventarioService(ApplicationDbContext context)
+    public MovimientoInventarioService(IUnitOfWork uow)
     {
-        _context = context;
+        _uow = uow;
     }
 
     public async Task<IEnumerable<Movimientosinventario>> ListarAsync()
     {
-        return await _context.Movimientosinventarios.AsNoTracking()
-            .OrderByDescending(m => m.Fecha).ThenByDescending(m => m.Movimientoid).ToListAsync();
+        return (await _uow.MovimientosInventario.GetAllAsync())
+            .OrderByDescending(m => m.Fecha).ThenByDescending(m => m.Movimientoid);
     }
 
     public async Task<Movimientosinventario?> ObtenerPorIdAsync(int id)
     {
-        return await _context.Movimientosinventarios.AsNoTracking()
-            .FirstOrDefaultAsync(m => m.Movimientoid == id);
+        return await _uow.MovimientosInventario.GetByIdAsync(id);
     }
 
     public async Task<Movimientosinventario> CrearAsync(Movimientosinventario movimiento)
     {
         ArgumentNullException.ThrowIfNull(movimiento);
         var tipo = Validar(movimiento);
-        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+        await using var transaction = await _uow.BeginTransactionAsync();
         var producto = await ObtenerProductoAsync(movimiento.Productoid);
         var stock = CalcularStock(producto.Stockactual, Efecto(tipo, movimiento.Cantidad));
         var nuevo = new Movimientosinventario
@@ -40,8 +38,8 @@ public class MovimientoInventarioService : IMovimientoInventarioService
             Fecha = movimiento.Fecha == default ? DateTime.Now : movimiento.Fecha
         };
         producto.Stockactual = stock;
-        _context.Movimientosinventarios.Add(nuevo);
-        await _context.SaveChangesAsync();
+        await _uow.MovimientosInventario.AddAsync(nuevo);
+        await _uow.SaveChangesAsync();
         await transaction.CommitAsync();
         return nuevo;
     }
@@ -50,8 +48,8 @@ public class MovimientoInventarioService : IMovimientoInventarioService
     {
         ArgumentNullException.ThrowIfNull(movimiento);
         var tipo = Validar(movimiento);
-        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
-        var actual = await _context.Movimientosinventarios.FindAsync(id);
+        await using var transaction = await _uow.BeginTransactionAsync();
+        var actual = await _uow.MovimientosInventario.GetByIdAsync(id);
         if (actual is null) return false;
 
         var anterior = await ObtenerProductoAsync(actual.Productoid);
@@ -76,27 +74,27 @@ public class MovimientoInventarioService : IMovimientoInventarioService
         actual.Tipomovimiento = tipo;
         actual.Cantidad = movimiento.Cantidad;
         if (movimiento.Fecha != default) actual.Fecha = movimiento.Fecha;
-        await _context.SaveChangesAsync();
+        await _uow.SaveChangesAsync();
         await transaction.CommitAsync();
         return true;
     }
 
     public async Task<bool> EliminarAsync(int id)
     {
-        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
-        var actual = await _context.Movimientosinventarios.FindAsync(id);
+        await using var transaction = await _uow.BeginTransactionAsync();
+        var actual = await _uow.MovimientosInventario.GetByIdAsync(id);
         if (actual is null) return false;
         var producto = await ObtenerProductoAsync(actual.Productoid);
         producto.Stockactual = CalcularStock(producto.Stockactual, -(long)Efecto(Validar(actual), actual.Cantidad));
-        _context.Movimientosinventarios.Remove(actual);
-        await _context.SaveChangesAsync();
+        await _uow.MovimientosInventario.DeleteAsync(id);
+        await _uow.SaveChangesAsync();
         await transaction.CommitAsync();
         return true;
     }
 
     private async Task<Producto> ObtenerProductoAsync(int id)
     {
-        return await _context.Productos.FindAsync(id)
+        return await _uow.Productos.GetByIdAsync(id)
             ?? throw new ArgumentException("El producto indicado no existe.");
     }
 
